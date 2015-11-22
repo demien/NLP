@@ -66,13 +66,16 @@ def estimate(total_cut_result, total_word_result, total_category_cnt, line):
     category_cnt = sum(total_category_cnt.values())
     for word, word_result in total_cut_result.iteritems():
         word_frequence = total_category_cnt[word] / float(category_cnt)
-        print word, word_frequence
         word_score_result[word] = word_score(line_cut_result, word, word_result, word_frequence)
     return get_top_category(word_score_result)
 
 
 def get_top_category(word_score_result):
-    return sorted(word_score_result.items(), key=operator.itemgetter(1), reverse=True)[0][0]
+    score_result = sorted(word_score_result.items(), key=operator.itemgetter(1), reverse=True)
+    for item in score_result:
+        category, score = item
+        print category, score
+    return score_result[0][0]
 
 
 def word_score(line_cut, word, word_result, word_frequence):
