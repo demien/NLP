@@ -1,11 +1,15 @@
 import os
 from tools import get_column_index
+from constants import SEPRATOR, RETRIVE_COLUMNS, DATA_BASE_PATH, INPUT_FILE, FORMATTED_OUTPUT_FILE, \
+    UNFORMATTED_OUTPUT_FILE
 
-os.chdir('data')
+
+os.chdir(DATA_BASE_PATH)
 CLEAN_RECORD = ''
 
+
 # http://ictclas.nlpir.org/nlpir/html/readme.htm#_Toc34628484
-def clean(input_path='input.csv', formatted_path='formatted.tsv', unformatted_path='unformatted.tsv'):
+def clean(input_path=INPUT_FILE, formatted_path=FORMATTED_OUTPUT_FILE, unformatted_path=UNFORMATTED_OUTPUT_FILE):
     formatted_records, unformatted_records = [], []
     with open(input_path, 'r') as input_file:
         record = CLEAN_RECORD
@@ -64,17 +68,17 @@ def _append_result(record, formatted_records, unformatted_records):
 def _ouput_to_file(records, file_name):
     with open(file_name, 'w') as output_file:
         for record in records:
-            record = record.replace(',', '\t')
-            record = _choose_fields(record, ['H', 'O', 'BP', 'BQ', 'BR', 'BS'])
+            record = record.replace(',', SEPRATOR)
+            record = _choose_fields(record, RETRIVE_COLUMNS)
             record += '\n'
             output_file.write(record)
 
 
-def _choose_fields(record, fields=[]):
-    if not fields:
+def _choose_fields(record, fields=None):
+    if fields is None:
         return record
-    split_result = record.split('\t')
-    return '\t'.join([split_result[get_column_index(field)] for field in fields])
+    split_result = record.split(SEPRATOR)
+    return SEPRATOR.join([split_result[get_column_index(field)] for field in fields])
 
 
 def _is_beginning_line(line):
@@ -91,4 +95,4 @@ def _is_formatted_record(record):
 
 
 if __name__ == '__main__':
-    clean('2015-01-to-03.csv')
+    clean()

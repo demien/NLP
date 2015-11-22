@@ -1,8 +1,10 @@
+# encoding=utf-8
 import sys
 sys.path.append('../')
 
 import jieba
 import jieba.analyse
+import jieba.posseg as pseg
 from optparse import OptionParser
 
 USAGE = "usage:    python extract_tags.py [file name] -k [top k]"
@@ -25,8 +27,19 @@ else:
 
 content = open(file_name, 'rb').read()
 
-tags = jieba.analyse.extract_tags(content, topK=topK, withWeight=True)
-tags = jieba.analyse.extract_tags(content, topK=topK)
 
-# print tags
-print(",".join(tags))
+def extract_tags(content, topK=topK):
+    # tags = jieba.analyse.extract_tags(content, topK=topK, withWeight=True)
+    tags = jieba.analyse.extract_tags(content, topK=topK)
+    print(",".join(tags))
+
+
+def cut(content):
+    seg_list = pseg.cut(content)
+    for word, flag in seg_list:
+        if flag in ['n', 'nr', 'ns', 'nz', 'nl', 'ng', 's', 'v']:
+            print('%s %s' % (word, flag))
+
+
+# extract_tags(content, topK)
+cut(content)
