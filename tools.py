@@ -81,7 +81,7 @@ def print_dict(data, tab_cnt=0):
             for k in data:
                 print '\t' * tab_cnt + k
         else:
-            print '\t' * tab_cnt + data
+            print '\t' * tab_cnt + str(data)
 
 
 if __name__ == '__main__':

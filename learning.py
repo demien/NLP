@@ -2,10 +2,11 @@
 import operator
 import os
 import pickle
+import copy
 from collections import defaultdict
 from constants import SEPRATOR, RETRIVE_COLUMNS, DATA_BASE_PATH, FORMATTED_OUTPUT_FILE, PICKLE_TOTAL_CUT_RESULT, \
     PICKLE_TOTAL_WORD_RESULT, PICKLE_TOTAL_CATEGORY_CNT
-from tools import generate_defaultdict
+from tools import generate_defaultdict, print_dict, print_result
 import jieba.posseg as pseg
 
 
@@ -33,16 +34,15 @@ def learning(input_path=FORMATTED_OUTPUT_FILE, level=1):
             total_word_result = merge_word_count(total_word_result, line_cut_result)
 
             # total_cut_result
-            import pdb; pdb.set_trace()
             total_cut_result_tmp = merge_word_count(get_deep_dict_value(total_cut_result, levels), cut(line))
-            set_deep_dict_value(get_deep_dict_value, levels, total_cut_result_tmp)
-            # total_cut_result[level_one] = merge_word_count(total_cut_result[level_one], cut(line))
+            set_deep_dict_value(total_cut_result, levels, total_cut_result_tmp)
 
             # total_category_cnt
-            set_deep_dict_value_tmp = get_deep_dict_value(set_deep_dict_value, levels)
-            set_deep_dict_value(total_category_cnt, levels, set_deep_dict_value_tmp+1)
-            # total_category_cnt[level_one] += 1
+            total_category_cnt_tmp = get_deep_dict_value(total_category_cnt, levels)
+            set_deep_dict_value(total_category_cnt, levels, total_category_cnt_tmp+1)
+
     return total_cut_result, total_word_result, total_category_cnt
+
 
 def cut(line):
     result = defaultdict(int)
@@ -54,17 +54,19 @@ def cut(line):
 
 
 def set_deep_dict_value(org_dict, keys, value):
-    last_key = keys.pop()
+    copy_keys = copy.copy(keys)
+    last_key = copy_keys.pop()
     tmp = org_dict
-    for key in keys:
-        tmp = tmp.get(key) 
+    for key in copy_keys:
+        tmp = tmp[key]
     tmp[last_key] = value
 
 
 def get_deep_dict_value(org_dict, keys):
     tmp = org_dict
     for key in keys:
-        tmp = tmp.get(key)
+        tmp = tmp[key]
+    # return defaultdict(int) if tmp is None else tmp
     return tmp
 
 
@@ -143,9 +145,34 @@ def pickle_dump(data, file_path):
         pickle.dump(data, output_file)
 
 
+def print_result(result, level=1):
+    start = '|'
+    seperator = '----|'
+    for xk, xv in result.iteritems():
+        print start + '%s' % (xk)
+        if 1 == level:
+            print_word_frequence(xv, 1)
+            continue
+        for yx, yv in xv.iteritems():
+            print start + seperator + ' %s' % (yx)
+            if 2 == level:
+                print_word_frequence(yv, 2)
+                continue
+
+def print_word_frequence(result, level):
+    start = '|'
+    seperator = '----|'
+    sorted_re = sorted(result.items(), key=operator.itemgetter(1), reverse=True)[:10]
+    for item in sorted_re:
+        k, v = item
+        print start + seperator * level + k + ':' + str(v)
+
+
 if __name__ == '__main__':
-    total_cut_result, total_word_result, total_category_cnt = learning()
-    print total_cut_result, total_word_result, total_category_cnt
+    level = 2
+    total_cut_result, total_word_result, total_category_cnt = learning(level=level)
+    print_result(total_cut_result, level)
+    # print total_cut_result, total_word_result, total_category_cnt
     # pickle_dump(total_cut_result, PICKLE_TOTAL_CUT_RESULT)
     # pickle_dump(total_word_result, PICKLE_TOTAL_WORD_RESULT)
     # pickle_dump(total_category_cnt, PICKLE_TOTAL_CATEGORY_CNT)
