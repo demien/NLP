@@ -18,13 +18,17 @@ def _get_A_to_Z(n=26):
 
 
 def load_all_result(input_path):
-    result_tree = generate_defaultdict(3, [])
+    result_tree = defaultdict(lambda: defaultdict(lambda: defaultdict(list)))
     with open(input_path, 'r') as input_file:
         for line in input_file:
             level_one, level_two, level_three, level_four, _, _ = line.split(SEPRATOR)
-            if level_four not in result_tree[level_one][level_two][level_three]:
-                result_tree[level_one][level_two][level_three].append(level_four)
+            level_one, level_two, level_three, level_four = batch_trim([level_one, level_two, level_three, level_four])
+            result_tree[level_one][level_two][level_three].append(level_four)
     return result_tree
+
+
+def batch_trim(data):
+    return [x.strip() for x in data]
 
 
 def generate_defaultdict(level, default):
@@ -39,21 +43,47 @@ def generate_defaultdict(level, default):
 
 
 def print_result(result, level=3):
+    start = '|'
+    seperator = '----|'
     for x in result.keys():
         if 1 <= level:
-            print x
+            print start + '%s: %s' % (x, count_dict(result[x]))
         for y in result[x].keys():
             if 2 <= level:
-                print '\t' + y 
+                print start + seperator + ' %s: %s' % (y, count_dict(result[x][y]))
             for z in result[x][y].keys():
                 if 3 <= level:
-                    print '\t\t' + z
+                    print start + seperator * 2 + ' %s: %s' % (z, count_dict(result[x][y][z]))
                 for zz in result[x][y][z]:
                     if zz:
                         if 4 <= level:
-                            print '\t\t\t' + zz
+                            print start + seperator * 3 + ' %s' % (zz)
+
+
+def count_dict(data):
+    cnt = 0
+    if type(data) == dict or type(data) == defaultdict:
+        for k, v in data.iteritems():
+            cnt += count_dict(v)
+        return cnt
+    if type(data) == list:
+        return len(data)
+
+
+def print_dict(data, tab_cnt=0):
+    if type(data) == dict or type(data) == defaultdict:
+        for k, v in data.iteritems():
+            print '\t' * tab_cnt + k
+            tab_cnt += 1
+            print print_dict(v, tab_cnt)
+    else:
+        if type(data) is list:
+            for k in data:
+                print '\t' * tab_cnt + k
+        else:
+            print '\t' * tab_cnt + data
 
 
 if __name__ == '__main__':
     tree = load_all_result(FORMATTED_OUTPUT_FILE)
-    print_result(tree)
+    print_result(tree, 2)
