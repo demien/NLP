@@ -35,8 +35,8 @@ def generate_defaultdict(level, default):
     '''
     recursive create default, using 'default' as the leaf node default value
     '''
-    if level <= 0:
-        return default
+    if level <= 1:
+        return defaultdict(default)
     else:
         level -= 1
         return defaultdict(lambda: generate_defaultdict(level, default))

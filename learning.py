@@ -12,14 +12,14 @@ import jieba.posseg as pseg
 os.chdir(DATA_BASE_PATH)
 
 
-def learning(input_path=FORMATTED_OUTPUT_FILE):
+def learning(input_path=FORMATTED_OUTPUT_FILE, level=1):
     # if os.path.isfile(PICKLE_TOTAL_CUT_RESULT) and os.path.isfile(PICKLE_TOTAL_WORD_RESULT) and \
     #     os.path.isfile(PICKLE_TOTAL_CATEGORY_CNT):
     #     return pickle_load(PICKLE_TOTAL_CUT_RESULT), pickle_load(PICKLE_TOTAL_WORD_RESULT), \
     #         pickle_load(PICKLE_TOTAL_CATEGORY_CNT)
     total_word_result = defaultdict(int)
-    total_cut_result = defaultdict(lambda: defaultdict(int))
-    total_category_cnt = defaultdict(int)
+    total_cut_result = generate_defaultdict(level + 1, int)
+    total_category_cnt = generate_defaultdict(level, int)
     cnt = 0
     with open(input_path, 'r') as input_file:
         for line in input_file:
@@ -27,9 +27,21 @@ def learning(input_path=FORMATTED_OUTPUT_FILE):
             cnt += 1
             level_one, level_two, level_three, level_four, content, cid = line.split(SEPRATOR)
             line_cut_result = cut(line)
+            levels = [level_one, level_two, level_three, level_four][:level]
+
+            # total_word_result
             total_word_result = merge_word_count(total_word_result, line_cut_result)
-            total_cut_result[level_one] = merge_word_count(total_cut_result[level_one], cut(line))
-            total_category_cnt[level_one] += 1
+
+            # total_cut_result
+            import pdb; pdb.set_trace()
+            total_cut_result_tmp = merge_word_count(get_deep_dict_value(total_cut_result, levels), cut(line))
+            set_deep_dict_value(get_deep_dict_value, levels, total_cut_result_tmp)
+            # total_cut_result[level_one] = merge_word_count(total_cut_result[level_one], cut(line))
+
+            # total_category_cnt
+            set_deep_dict_value_tmp = get_deep_dict_value(set_deep_dict_value, levels)
+            set_deep_dict_value(total_category_cnt, levels, set_deep_dict_value_tmp+1)
+            # total_category_cnt[level_one] += 1
     return total_cut_result, total_word_result, total_category_cnt
 
 def cut(line):
@@ -39,6 +51,21 @@ def cut(line):
         if flag in ['n', 'nr', 'ns', 'nz', 'nl', 'ng', 's', 'v']:
             result[word] += 1
     return result
+
+
+def set_deep_dict_value(org_dict, keys, value):
+    last_key = keys.pop()
+    tmp = org_dict
+    for key in keys:
+        tmp = tmp.get(key) 
+    tmp[last_key] = value
+
+
+def get_deep_dict_value(org_dict, keys):
+    tmp = org_dict
+    for key in keys:
+        tmp = tmp.get(key)
+    return tmp
 
 
 def merge_word_count(ori_word_cnt, new_word_cnt):
@@ -118,6 +145,7 @@ def pickle_dump(data, file_path):
 
 if __name__ == '__main__':
     total_cut_result, total_word_result, total_category_cnt = learning()
+    print total_cut_result, total_word_result, total_category_cnt
     # pickle_dump(total_cut_result, PICKLE_TOTAL_CUT_RESULT)
     # pickle_dump(total_word_result, PICKLE_TOTAL_WORD_RESULT)
     # pickle_dump(total_category_cnt, PICKLE_TOTAL_CATEGORY_CNT)
