@@ -15,10 +15,10 @@ os.chdir(DATA_BASE_PATH)
 
 
 def learning(input_path=FORMATTED_OUTPUT_FILE, level=1):
-    # if os.path.isfile(PICKLE_TOTAL_CUT_RESULT) and os.path.isfile(PICKLE_TOTAL_WORD_RESULT) and \
-    #     os.path.isfile(PICKLE_TOTAL_CATEGORY_CNT):
-    #     return pickle_load(PICKLE_TOTAL_CUT_RESULT), pickle_load(PICKLE_TOTAL_WORD_RESULT), \
-    #         pickle_load(PICKLE_TOTAL_CATEGORY_CNT)
+    if os.path.isfile(PICKLE_TOTAL_CUT_RESULT) and os.path.isfile(PICKLE_TOTAL_WORD_RESULT) and \
+        os.path.isfile(PICKLE_TOTAL_CATEGORY_CNT):
+        return pickle_load(PICKLE_TOTAL_CUT_RESULT), pickle_load(PICKLE_TOTAL_WORD_RESULT), \
+            pickle_load(PICKLE_TOTAL_CATEGORY_CNT)
     total_word_result = defaultdict(int)
     total_cut_result = generate_defaultdict(level + 1, int)
     total_category_cnt = generate_defaultdict(level, int)
@@ -44,6 +44,9 @@ def learning(input_path=FORMATTED_OUTPUT_FILE, level=1):
             total_category_cnt_tmp = get_deep_dict_value(total_category_cnt, levels)
             set_deep_dict_value(total_category_cnt, levels, total_category_cnt_tmp+1)
 
+    pickle_dump(total_cut_result, PICKLE_TOTAL_CUT_RESULT)
+    pickle_dump(total_word_result, PICKLE_TOTAL_WORD_RESULT)
+    pickle_dump(total_category_cnt, PICKLE_TOTAL_CATEGORY_CNT)
     return total_cut_result, total_word_result, total_category_cnt
 
 
@@ -155,8 +158,8 @@ def print_result(result, level=1):
         if 1 == level:
             print_word_frequence(xv, 1)
             continue
-        for yx, yv in xv.iteritems():
-            print start + seperator + ' %s' % (yx)
+        for yk, yv in xv.iteritems():
+            print start + seperator + ' %s' % (yk)
             if 2 == level:
                 print_word_frequence(yv, 2)
                 continue
@@ -174,10 +177,6 @@ if __name__ == '__main__':
     level = 2
     total_cut_result, total_word_result, total_category_cnt = learning(level=level)
     print_result(total_cut_result, level)
-    # pickle_dump(total_cut_result, PICKLE_TOTAL_CUT_RESULT)
-    # pickle_dump(total_word_result, PICKLE_TOTAL_WORD_RESULT)
-    # pickle_dump(total_category_cnt, PICKLE_TOTAL_CATEGORY_CNT)
-
     # line = '18566781877用户来电反映，其在之前有办理宽带ADSLD2263902171提速12M，至今仍未提速上去，经系统查看，其宽带因为线路超长-不支持12M，现用户要求把这个提速撤销，用户要求帮其宽带提速至6M，或者帮其核实最高能提速多少M，请核实跟进处理，谢谢！联系人：王先生联系电话：18566781877'
     # print '--------result--------'
     # print estimate(total_cut_result, total_word_result, total_category_cnt, line)
