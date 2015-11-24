@@ -1,4 +1,6 @@
+# encoding=utf-8
 import os
+import re
 from collections import defaultdict
 from constants import SEPRATOR, RETRIVE_COLUMNS, DATA_BASE_PATH, FORMATTED_OUTPUT_FILE
 
@@ -22,13 +24,28 @@ def load_all_result(input_path):
     with open(input_path, 'r') as input_file:
         for line in input_file:
             level_one, level_two, level_three, level_four, _, _ = line.split(SEPRATOR)
-            level_one, level_two, level_three, level_four = batch_trim([level_one, level_two, level_three, level_four])
+            level_one, level_two, level_three, level_four = format_keys([level_one, level_two, level_three, level_four])
             result_tree[level_one][level_two][level_three].append(level_four)
     return result_tree
 
 
+def format_keys(data):
+    data = remove_brackets(data)
+    data = batch_trim(data)
+    return data
+
+
 def batch_trim(data):
     return [x.strip() for x in data]
+
+
+def remove_brackets(data):
+    data = [re.sub('（.*）', '', x) for x in data]
+    data = [re.sub('\(.*\)', '', x) for x in data]
+    data = [re.sub('（.*\)', '', x) for x in data]
+    data = [re.sub('\(.*）', '', x) for x in data]
+    data = [re.sub('【.*】', '', x) for x in data]
+    return data
 
 
 def generate_defaultdict(level, default):

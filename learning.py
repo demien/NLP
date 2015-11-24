@@ -3,10 +3,11 @@ import operator
 import os
 import pickle
 import copy
+import json
 from collections import defaultdict
 from constants import SEPRATOR, RETRIVE_COLUMNS, DATA_BASE_PATH, FORMATTED_OUTPUT_FILE, PICKLE_TOTAL_CUT_RESULT, \
     PICKLE_TOTAL_WORD_RESULT, PICKLE_TOTAL_CATEGORY_CNT
-from tools import generate_defaultdict, print_dict, print_result
+from tools import generate_defaultdict, print_result, format_keys
 import jieba.posseg as pseg
 
 
@@ -24,11 +25,13 @@ def learning(input_path=FORMATTED_OUTPUT_FILE, level=1):
     cnt = 0
     with open(input_path, 'r') as input_file:
         for line in input_file:
-            print cnt
+            if cnt % 100 == 0:
+                print cnt
             cnt += 1
             level_one, level_two, level_three, level_four, content, cid = line.split(SEPRATOR)
             line_cut_result = cut(line)
             levels = [level_one, level_two, level_three, level_four][:level]
+            levels = format_keys(levels)
 
             # total_word_result
             total_word_result = merge_word_count(total_word_result, line_cut_result)
@@ -66,7 +69,6 @@ def get_deep_dict_value(org_dict, keys):
     tmp = org_dict
     for key in keys:
         tmp = tmp[key]
-    # return defaultdict(int) if tmp is None else tmp
     return tmp
 
 
@@ -137,12 +139,12 @@ def word_score(line_cut, word, word_result, word_frequence):
 
 def pickle_load(file_path):
     with open(file_path, 'r') as input_file:
-        return pickle.load(input_file)
+        return json.loads(pickle.load(input_file))
 
 
 def pickle_dump(data, file_path):
     with open(file_path, 'wb') as output_file:
-        pickle.dump(data, output_file)
+        pickle.dump(json.dumps(data), output_file)
 
 
 def print_result(result, level=1):
@@ -162,7 +164,7 @@ def print_result(result, level=1):
 def print_word_frequence(result, level):
     start = '|'
     seperator = '----|'
-    sorted_re = sorted(result.items(), key=operator.itemgetter(1), reverse=True)[:10]
+    sorted_re = sorted(result.items(), key=operator.itemgetter(1), reverse=True)[:15]
     for item in sorted_re:
         k, v = item
         print start + seperator * level + k + ':' + str(v)
@@ -172,7 +174,6 @@ if __name__ == '__main__':
     level = 2
     total_cut_result, total_word_result, total_category_cnt = learning(level=level)
     print_result(total_cut_result, level)
-    # print total_cut_result, total_word_result, total_category_cnt
     # pickle_dump(total_cut_result, PICKLE_TOTAL_CUT_RESULT)
     # pickle_dump(total_word_result, PICKLE_TOTAL_WORD_RESULT)
     # pickle_dump(total_category_cnt, PICKLE_TOTAL_CATEGORY_CNT)

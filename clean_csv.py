@@ -66,6 +66,8 @@ def _append_result(record, formatted_records, unformatted_records):
 
 
 def _ouput_to_file(records, file_name):
+    if not records:
+        return
     with open(file_name, 'w') as output_file:
         for record in records:
             record = record.replace(',', SEPRATOR)
