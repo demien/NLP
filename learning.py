@@ -12,37 +12,38 @@ import jieba.posseg as pseg
 
 
 os.chdir(DATA_BASE_PATH)
+category = 2
 
 
-def learning(input_path=FORMATTED_OUTPUT_FILE, level=1):
+def learning(input_path=FORMATTED_OUTPUT_FILE, category=1):
     if os.path.isfile(PICKLE_TOTAL_CUT_RESULT) and os.path.isfile(PICKLE_TOTAL_WORD_RESULT) and \
         os.path.isfile(PICKLE_TOTAL_CATEGORY_CNT):
         return pickle_load(PICKLE_TOTAL_CUT_RESULT), pickle_load(PICKLE_TOTAL_WORD_RESULT), \
             pickle_load(PICKLE_TOTAL_CATEGORY_CNT)
     total_word_result = defaultdict(int)
-    total_cut_result = generate_defaultdict(level + 1, int)
-    total_category_cnt = generate_defaultdict(level, int)
+    total_cut_result = generate_defaultdict(category + 1, int)
+    total_category_cnt = generate_defaultdict(category, int)
     cnt = 0
     with open(input_path, 'r') as input_file:
         for line in input_file:
             if cnt % 100 == 0:
                 print cnt
             cnt += 1
-            level_one, level_two, level_three, level_four, content, cid = line.split(SEPRATOR)
+            category_one, category_two, category_three, category_four, content, cid = line.split(SEPRATOR)
             line_cut_result = cut(line)
-            levels = [level_one, level_two, level_three, level_four][:level]
-            levels = format_keys(levels)
+            categorys = [category_one, category_two, category_three, category_four][:category]
+            categorys = format_keys(categorys)
 
             # total_word_result
             total_word_result = merge_word_count(total_word_result, line_cut_result)
 
             # total_cut_result
-            total_cut_result_tmp = merge_word_count(get_deep_dict_value(total_cut_result, levels), cut(line))
-            set_deep_dict_value(total_cut_result, levels, total_cut_result_tmp)
+            total_cut_result_tmp = merge_word_count(get_deep_dict_value(total_cut_result, categorys), cut(line))
+            set_deep_dict_value(total_cut_result, categorys, total_cut_result_tmp)
 
             # total_category_cnt
-            total_category_cnt_tmp = get_deep_dict_value(total_category_cnt, levels)
-            set_deep_dict_value(total_category_cnt, levels, total_category_cnt_tmp+1)
+            total_category_cnt_tmp = get_deep_dict_value(total_category_cnt, categorys)
+            set_deep_dict_value(total_category_cnt, categorys, total_category_cnt_tmp+1)
 
     pickle_dump(total_cut_result, PICKLE_TOTAL_CUT_RESULT)
     pickle_dump(total_word_result, PICKLE_TOTAL_WORD_RESULT)
@@ -83,42 +84,52 @@ def merge_word_count(ori_word_cnt, new_word_cnt):
     return new_word_result
 
 
-def estimate(total_cut_result, total_word_result, total_category_cnt, line):
+def estimate(total_cut_result, total_word_result, total_category_cnt, line, top_n=3):
     '''
     total_cut_result: the word count for all the target word
     Eg:
         {
-            网厅: {投诉: 2, 欠费: 3},
-            手机商城: {}
+            网厅: {
+                掌厅积分兑换: {投诉: 2, 欠费: 3},
+            },
+            手机商城: {
+                其他: {投诉: 2, 欠费: 3},  
+            }
         }
 
     total_word_result: the word count in all the document
     Eg:
         {投诉: 2, 欠费: 3}
 
-
     total_category_cnt:
     Eg:
-        {网厅:10, }
+        {
+            网厅: {掌厅积分兑换:10, 其他:5}
+        }
     '''
     line_cut_result = cut(line)
     word_score_result = defaultdict(float)
-    category_cnt = sum(total_category_cnt.values())
-    for word, word_result in total_cut_result.iteritems():
-        word_frequence = total_category_cnt[word] / float(category_cnt)
-        word_score_result[word] = word_score(line_cut_result, word, word_result, word_frequence)
-    return get_top_category(word_score_result)
+    category_list = []
+    for category_one, category_one_data in total_category_cnt.iteritems():
+        for category_two, category_two_data in category_one_data.iteritems():
+            category_list.append(category_two_data)
+    category_cnt = sum(category_list)
+
+    for category_one, category_one_word_result in total_cut_result.iteritems():
+        for category_two, category_two_word_result in category_one_word_result.iteritems():
+            category_frequence = total_category_cnt[category_one][category_two] / float(category_cnt)
+            word_score_result[(category_one, category_two)] = word_score(line_cut_result, category_two, category_two_word_result, category_frequence)
+    return get_top_category(word_score_result, top_n)
 
 
-def get_top_category(word_score_result):
+def get_top_category(word_score_result, top_n):
     score_result = sorted(word_score_result.items(), key=operator.itemgetter(1), reverse=True)
     for item in score_result:
         category, score = item
-        print category, score
-    return score_result[0][0]
+    return score_result[:top_n]
 
 
-def word_score(line_cut, word, word_result, word_frequence):
+def word_score(line_cut, key, word_result, category_frequence):
     '''
     line_cut:
     Eg:
@@ -128,15 +139,15 @@ def word_score(line_cut, word, word_result, word_frequence):
     Eg:
         {投诉: 2, 欠费: 3}
 
-    word_frequence: the persentage of the word
+    category_frequence: the persentage of the word
     Eg:
         0.002
     '''
-    score = word_frequence
+    score = 1.0 * category_frequence
     total_cnt = sum([x for x in word_result.values()])
     for word, word_cnt in line_cut.iteritems():
         if word in word_result:
-            score *= (word_cnt / float(total_cnt)) ** word_cnt
+            score *= (word_result[word] / float(total_cnt)) ** word_cnt
     return score
 
 
@@ -150,33 +161,38 @@ def pickle_dump(data, file_path):
         pickle.dump(json.dumps(data), output_file)
 
 
-def print_result(result, level=1):
+def print_result(result, category=1):
     start = '|'
     seperator = '----|'
     for xk, xv in result.iteritems():
         print start + '%s' % (xk)
-        if 1 == level:
+        if 1 == category:
             print_word_frequence(xv, 1)
             continue
         for yk, yv in xv.iteritems():
             print start + seperator + ' %s' % (yk)
-            if 2 == level:
+            if 2 == category:
                 print_word_frequence(yv, 2)
                 continue
 
-def print_word_frequence(result, level):
+
+def print_word_frequence(result, category):
+    top_word_cnt = 100
     start = '|'
     seperator = '----|'
-    sorted_re = sorted(result.items(), key=operator.itemgetter(1), reverse=True)[:15]
+    sorted_re = sorted(result.items(), key=operator.itemgetter(1), reverse=True)[:top_word_cnt]
     for item in sorted_re:
         k, v = item
-        print start + seperator * level + k + ':' + str(v)
+        print start + seperator * category + k + ':' + str(v)
 
 
 if __name__ == '__main__':
-    level = 2
-    total_cut_result, total_word_result, total_category_cnt = learning(level=level)
-    print_result(total_cut_result, level)
-    # line = '18566781877用户来电反映，其在之前有办理宽带ADSLD2263902171提速12M，至今仍未提速上去，经系统查看，其宽带因为线路超长-不支持12M，现用户要求把这个提速撤销，用户要求帮其宽带提速至6M，或者帮其核实最高能提速多少M，请核实跟进处理，谢谢！联系人：王先生联系电话：18566781877'
-    # print '--------result--------'
-    # print estimate(total_cut_result, total_word_result, total_category_cnt, line)
+    total_cut_result, total_word_result, total_category_cnt = learning(category=category)
+    # print_result(total_cut_result, category)
+    line = '18566781877用户来电反映，其在之前有办理宽带ADSLD2263902171提速12M，至今仍未提速上去，经系统查看，其宽带因为线路超长-不支持12M，现用户要求把这个提速撤销，用户要求帮其宽带提速至6M，或者帮其核实最高能提速多少M，请核实跟进处理，谢谢！联系人：王先生联系电话：18566781877'
+    re = estimate(total_cut_result, total_word_result, total_category_cnt, line)
+    print line
+    print '----The most possible top 3 category----'
+    for item in re:
+        category, score = item
+        print category[0], category[1], score

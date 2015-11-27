@@ -11,4 +11,3 @@ UNFORMATTED_OUTPUT_FILE = 'unformatted.tsv'
 PICKLE_TOTAL_CUT_RESULT = 'pickle_total_cut_result.pkl'
 PICKLE_TOTAL_WORD_RESULT = 'pickle_total_word_result.pkl'
 PICKLE_TOTAL_CATEGORY_CNT = 'pickle_total_category_cnt.pkl'
-
