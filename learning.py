@@ -4,18 +4,19 @@ import os
 import pickle
 import copy
 import json
+import sys
 from collections import defaultdict
 from constants import SEPRATOR, RETRIVE_COLUMNS, DATA_BASE_PATH, FORMATTED_OUTPUT_FILE, PICKLE_TOTAL_CUT_RESULT, \
     PICKLE_TOTAL_WORD_RESULT, PICKLE_TOTAL_CATEGORY_CNT
-from tools import generate_defaultdict, print_result, format_keys
+from tools import generate_defaultdict, print_result, format_keys, cd_data, cd_training_data
 import jieba.posseg as pseg
 
 
-os.chdir(DATA_BASE_PATH)
-category = 2
+CATEGORY = 2
 
 
 def learning(input_path=FORMATTED_OUTPUT_FILE, category=1):
+    cd_training_data()
     if os.path.isfile(PICKLE_TOTAL_CUT_RESULT) and os.path.isfile(PICKLE_TOTAL_WORD_RESULT) and \
         os.path.isfile(PICKLE_TOTAL_CATEGORY_CNT):
         return pickle_load(PICKLE_TOTAL_CUT_RESULT), pickle_load(PICKLE_TOTAL_WORD_RESULT), \
@@ -24,6 +25,7 @@ def learning(input_path=FORMATTED_OUTPUT_FILE, category=1):
     total_cut_result = generate_defaultdict(category + 1, int)
     total_category_cnt = generate_defaultdict(category, int)
     cnt = 0
+    cd_data()
     with open(input_path, 'r') as input_file:
         for line in input_file:
             if cnt % 100 == 0:
@@ -45,6 +47,7 @@ def learning(input_path=FORMATTED_OUTPUT_FILE, category=1):
             total_category_cnt_tmp = get_deep_dict_value(total_category_cnt, categorys)
             set_deep_dict_value(total_category_cnt, categorys, total_category_cnt_tmp+1)
 
+    cd_training_data()
     pickle_dump(total_cut_result, PICKLE_TOTAL_CUT_RESULT)
     pickle_dump(total_word_result, PICKLE_TOTAL_WORD_RESULT)
     pickle_dump(total_category_cnt, PICKLE_TOTAL_CATEGORY_CNT)
@@ -186,13 +189,21 @@ def print_word_frequence(result, category):
         print start + seperator * category + k + ':' + str(v)
 
 
-if __name__ == '__main__':
-    total_cut_result, total_word_result, total_category_cnt = learning(category=category)
+def predict(line):
+    total_cut_result, total_word_result, total_category_cnt = learning(category=CATEGORY)
     # print_result(total_cut_result, category)
-    line = '18566781877用户来电反映，其在之前有办理宽带ADSLD2263902171提速12M，至今仍未提速上去，经系统查看，其宽带因为线路超长-不支持12M，现用户要求把这个提速撤销，用户要求帮其宽带提速至6M，或者帮其核实最高能提速多少M，请核实跟进处理，谢谢！联系人：王先生联系电话：18566781877'
     re = estimate(total_cut_result, total_word_result, total_category_cnt, line)
-    print line
     print '----The most possible top 3 category----'
     for item in re:
         category, score = item
         print category[0], category[1], score
+
+
+
+if __name__ == '__main__':
+    # line = '18566781877用户来电反映，其在之前有办理宽带ADSLD2263902171提速12M，至今仍未提速上去，经系统查看，其宽带因为线路超长-不支持12M，现用户要求把这个提速撤销，用户要求帮其宽带提速至6M，或者帮其核实最高能提速多少M，请核实跟进处理，谢谢！联系人：王先生联系电话：18566781877'
+    line = raw_input('Please input the complain (Q for quit): ')
+    while line != 'Q':
+        predict(line)
+        line = raw_input('Please input the complain (Q for quit): ')
+    print 'bye'

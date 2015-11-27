@@ -2,7 +2,7 @@
 import os
 import re
 from collections import defaultdict
-from constants import SEPRATOR, RETRIVE_COLUMNS, DATA_BASE_PATH, FORMATTED_OUTPUT_FILE
+from constants import SEPRATOR, RETRIVE_COLUMNS, DATA_BASE_PATH, FORMATTED_OUTPUT_FILE, DATA_TRAINING_RESULT_PATH
 
 
 os.chdir(DATA_BASE_PATH)
@@ -99,6 +99,14 @@ def print_dict(data, tab_cnt=0):
                 print '\t' * tab_cnt + k
         else:
             print '\t' * tab_cnt + str(data)
+
+
+def cd_data():
+    os.chdir(DATA_BASE_PATH)
+
+
+def cd_training_data():
+    os.chdir(DATA_TRAINING_RESULT_PATH)
 
 
 if __name__ == '__main__':
