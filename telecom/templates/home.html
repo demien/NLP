@@ -11,6 +11,7 @@
     <script type="text/javascript">
         $(function() {
             $('#estimate').click(function() {
+                var $btn = $(this).button('loading');
                 $.getJSON('/estimate?complain=' + $('#complain').val(), function(data) {
                     var table = $('#estimate_table');
                     var table_html = '<tr><th>排名</th><th>第一分类</th><th>第二分类</th></tr>';
@@ -26,6 +27,7 @@
                         table_html = table_html + row
                     }
                     table.html(table_html);
+                    $btn.button('reset');
                 });
             });
         });
