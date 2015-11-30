@@ -1,0 +1,56 @@
+<head>
+    <script type="text/javascript" src="http://code.jquery.com/jquery-2.1.4.min.js"></script>
+    <!-- Latest compiled and minified CSS -->
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css" integrity="sha384-1q8mTJOASx8j1Au+a5WDVnPi2lkFfwwEAa8hDDdjZlpLegxhjVME1fgjWPGmkzs7" crossorigin="anonymous">
+
+    <!-- Optional theme -->
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap-theme.min.css" integrity="sha384-fLW2N01lMqjakBkx3l/M9EahuwpSfeNvV63J5ezn3uZzapT0u7EYsXMjQV+0En5r" crossorigin="anonymous">
+
+    <!-- Latest compiled and minified JavaScript -->
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js" integrity="sha384-0mSbJDEHialfmuBBQP6A4Qrprq5OVfW37PRR3j5ELqxss1yVqOtnepnHVP9aJ7xS" crossorigin="anonymous"></script>
+    <script type="text/javascript">
+        $(function() {
+            $('#estimate').click(function() {
+                $.getJSON('/estimate?complain=' + $('#complain').val(), function(data) {
+                    var table = $('#estimate_table');
+                    var table_html = '<tr><th>排名</th><th>第一分类</th><th>第二分类</th></tr>';
+                    var table = $('#estimate_table');
+                    for (estimate_index in data) {
+                        estimate = data[estimate_index]
+                        row = '<tr>';
+                        for (item_index in estimate) {
+                            item = estimate[item_index]
+                            row = row + '<td class="default"> ' + item +' </td>';
+                        }
+                        row = row + '</tr>'
+                        table_html = table_html + row
+                    }
+                    table.html(table_html);
+                });
+            });
+        });
+    </script>
+</head>
+<body style="text-align: center; padding: 50px;">
+<div class="panel panel-default">
+    <div class="panel-heading">
+        <h2 class="panel-title"><b>电信客服投诉分类器</b></h2>
+    </div>
+    <div class="panel-body">
+        <textarea class="form-control" rows="5" id="complain" placeholder="输入用户投诉，例如:续2014121510001173 用户称通过电信营业厅核实还是没有把发票更改为月结，现用户要求取消包年套餐并且退还费用，前台按业务规则解释无效，用户要求立即回复，请协助处理，谢谢！"></textarea><br>
+        <button type="button" class="btn btn-primary btn-lg" id="estimate">预测</button><br><br>
+        <table class="table table-striped" id="estimate_table">
+            <tbody>
+            {% for estimate in content %}
+            <tr>
+                {% for item in estimate %} 
+                    <td class="default"> {{ item }} </td>
+                {% endfor %}
+            </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+</body>
