@@ -14,6 +14,7 @@
                 var $btn = $(this).button('loading');
                 $.getJSON('/estimate?complain=' + $('#complain').val(), function(data) {
                     var table = $('#estimate_table');
+                    table.html('');
                     var table_html = '<tr><th>排名</th><th>第一分类</th><th>第二分类</th></tr>';
                     var table = $('#estimate_table');
                     for (estimate_index in data) {
